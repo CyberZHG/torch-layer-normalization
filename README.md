@@ -14,5 +14,8 @@ pip install torch-layer-normalization
 ## Usage
 
 ```python
+from torch_layer_normalization import LayerNormalization
 
+LayerNormalization(normal_shape=normal_shape)
+# The `normal_shape` could be the last dimension of the input tensor or the shape of the input tensor.
 ```

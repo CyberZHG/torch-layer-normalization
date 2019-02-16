@@ -12,7 +12,7 @@ with codecs.open('requirements.txt', 'r', 'utf8') as reader:
 
 setup(
     name='torch-layer-normalization',
-    version='0.9.0',
+    version='0.10.0',
     packages=find_packages(),
     url='https://github.com/CyberZHG/torch-layer-normalization',
     license='MIT',

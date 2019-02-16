@@ -37,8 +37,7 @@ class SimpleDataset(data.Dataset):
 class TestLayerNormalization(TestCase):
 
     def test_first_step(self):
-        normal_shape = 3
-        net = SimpleNet(normal_shape)
+        net = SimpleNet((2, 3))
         inputs = torch.Tensor([[[0.2, 0.1, 0.3], [0.5, 0.1, 0.1]]])
         outputs = net(inputs)
         expected = torch.Tensor([[[0.0, -1.22474487, 1.22474487], [1.41421356, -0.707106781, -0.707106781]]])
