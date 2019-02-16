@@ -18,8 +18,8 @@ class SimpleDataset(data.Dataset):
 
     def __getitem__(self, _):
         x = torch.randn(self.shape)
-        mean = torch.mean(x, dim=-1, keepdim=True)
-        std = torch.std(x, dim=-1, keepdim=True)
+        mean = x.mean(dim=-1, keepdim=True)
+        std = x.std(dim=-1, keepdim=True)
         y = 0.5 * (x - mean) / std - 0.3
         return x, y
 
@@ -31,14 +31,14 @@ class TestLayerNormalization(TestCase):
         inputs = torch.Tensor([[[0.2, 0.1, 0.3], [0.5, 0.1, 0.1]]])
         outputs = net(inputs)
         expected = torch.Tensor([[[0.0, -1.22474487, 1.22474487], [1.41421356, -0.707106781, -0.707106781]]])
-        self.assertTrue(torch.allclose(expected, outputs), (expected, outputs))
+        self.assertTrue(expected.allclose(outputs), (expected, outputs))
 
     def test_first_step_without_param(self):
-        net = LayerNormalization(3, scale=False, center=False)
+        net = LayerNormalization(3, gamma=False, beta=False)
         inputs = torch.Tensor([[[0.2, 0.1, 0.3], [0.5, 0.1, 0.1]]])
         outputs = net(inputs)
         expected = torch.Tensor([[[0.0, -1.22474487, 1.22474487], [1.41421356, -0.707106781, -0.707106781]]])
-        self.assertTrue(torch.allclose(expected, outputs), (expected, outputs))
+        self.assertTrue(expected.allclose(outputs), (expected, outputs))
 
     def test_all_zeros(self):
         shape = torch.randint(1, 100, (3,), dtype=torch.int32).tolist()
@@ -46,7 +46,7 @@ class TestLayerNormalization(TestCase):
         net = LayerNormalization(normal_shape)
         inputs = torch.zeros(shape)
         outputs = net(inputs)
-        self.assertTrue(torch.allclose(inputs, outputs), (inputs, outputs))
+        self.assertTrue(inputs.allclose(outputs), (inputs, outputs))
 
     def test_fit(self):
         dim = torch.randint(2, 4, (1,), dtype=torch.int32).tolist()[0]
@@ -71,7 +71,7 @@ class TestLayerNormalization(TestCase):
             if i > 10:
                 break
             y_hat = net(x)
-            self.assertTrue(torch.allclose(y, y_hat, rtol=0.0, atol=1e-3), (i, y, y_hat))
+            self.assertTrue(y.allclose(y_hat, rtol=0.0, atol=1e-3), (i, y, y_hat))
 
     def test_save_load(self):
         net = LayerNormalization(3)

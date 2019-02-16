@@ -9,16 +9,16 @@ class LayerNormalization(nn.Module):
 
     def __init__(self,
                  normal_shape,
-                 scale=True,
-                 center=True,
+                 gamma=True,
+                 beta=True,
                  epsilon=1e-10):
         """Layer normalization layer
 
         See: [Layer Normalization](https://arxiv.org/pdf/1607.06450.pdf)
 
         :param normal_shape: The shape of the input tensor or the last dimension of the input tensor.
-        :param scale: Add a scale parameter if it is True.
-        :param center: Add an offset parameter if it is True.
+        :param gamma: Add a scale parameter if it is True.
+        :param beta: Add an offset parameter if it is True.
         :param epsilon: Epsilon for calculating variance.
         """
         super(LayerNormalization, self).__init__()
@@ -27,33 +27,35 @@ class LayerNormalization(nn.Module):
         else:
             normal_shape = (normal_shape[-1],)
         self.normal_shape = torch.Size(normal_shape)
-        self.center, self.scale, self.epsilon = center, scale, epsilon
-        if scale:
+        self.epsilon = epsilon
+        if gamma:
             self.gamma = nn.Parameter(torch.Tensor(*normal_shape))
         else:
             self.register_parameter('gamma', None)
-        if center:
+        if beta:
             self.beta = nn.Parameter(torch.Tensor(*normal_shape))
         else:
             self.register_parameter('beta', None)
         self.reset_parameters()
 
     def reset_parameters(self):
-        if self.scale:
+        if self.gamma is not None:
             self.gamma.data.fill_(1)
-        if self.center:
+        if self.beta is not None:
             self.beta.data.zero_()
 
     def forward(self, x):
-        mean = torch.mean(x, dim=-1, keepdim=True)
-        var = torch.mean((x - mean) ** 2, dim=-1, keepdim=True)
-        std = torch.sqrt(var + self.epsilon)
+        mean = x.mean(dim=-1, keepdim=True)
+        var = ((x - mean) ** 2).mean(dim=-1, keepdim=True)
+        std = (var + self.epsilon).sqrt()
         y = (x - mean) / std
-        if self.scale:
+        if self.gamma is not None:
             y *= self.gamma
-        if self.center:
+        if self.beta is not None:
             y += self.beta
         return y
 
     def extra_repr(self):
-        return '{normal_shape}, center={center}, scale={scale}, eps={epsilon}'.format(**self.__dict__)
+        return 'normal_shape={}, gamma={}, beta={}, epsilon={}'.format(
+            self.normal_shape, self.gamma is not None, self.beta is not None, self.epsilon,
+        )
