@@ -28,13 +28,14 @@ class LayerNormalization(nn.Module):
             normal_shape = (normal_shape[-1],)
         self.normal_shape = torch.Size(normal_shape)
         self.center, self.scale, self.epsilon = center, scale, epsilon
-        gamma, beta = None, None
         if scale:
-            gamma = nn.Parameter(torch.Tensor(*normal_shape))
+            self.gamma = nn.Parameter(torch.Tensor(*normal_shape))
+        else:
+            self.register_parameter('gamma', None)
         if center:
-            beta = nn.Parameter(torch.Tensor(*normal_shape))
-        self.register_parameter('gamma', gamma)
-        self.register_parameter('beta', beta)
+            self.beta = nn.Parameter(torch.Tensor(*normal_shape))
+        else:
+            self.register_parameter('beta', None)
         self.reset_parameters()
 
     def reset_parameters(self):

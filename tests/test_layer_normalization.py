@@ -8,16 +8,6 @@ from torch.utils import data
 from torch_layer_normalization import LayerNormalization
 
 
-class SimpleNet(nn.Module):
-
-    def __init__(self, normal_shape):
-        super(SimpleNet, self).__init__()
-        self.layer_norm = LayerNormalization(normal_shape=normal_shape)
-
-    def forward(self, x):
-        return self.layer_norm(x)
-
-
 class SimpleDataset(data.Dataset):
 
     def __init__(self, shape):
@@ -37,7 +27,14 @@ class SimpleDataset(data.Dataset):
 class TestLayerNormalization(TestCase):
 
     def test_first_step(self):
-        net = SimpleNet((2, 3))
+        net = LayerNormalization((2, 3))
+        inputs = torch.Tensor([[[0.2, 0.1, 0.3], [0.5, 0.1, 0.1]]])
+        outputs = net(inputs)
+        expected = torch.Tensor([[[0.0, -1.22474487, 1.22474487], [1.41421356, -0.707106781, -0.707106781]]])
+        self.assertTrue(torch.allclose(expected, outputs), (expected, outputs))
+
+    def test_first_step_without_param(self):
+        net = LayerNormalization(3, scale=False, center=False)
         inputs = torch.Tensor([[[0.2, 0.1, 0.3], [0.5, 0.1, 0.1]]])
         outputs = net(inputs)
         expected = torch.Tensor([[[0.0, -1.22474487, 1.22474487], [1.41421356, -0.707106781, -0.707106781]]])
@@ -46,7 +43,7 @@ class TestLayerNormalization(TestCase):
     def test_all_zeros(self):
         shape = torch.randint(1, 100, (3,), dtype=torch.int32).tolist()
         normal_shape = shape[-1]
-        net = SimpleNet(normal_shape)
+        net = LayerNormalization(normal_shape)
         inputs = torch.zeros(shape)
         outputs = net(inputs)
         self.assertTrue(torch.allclose(inputs, outputs), (inputs, outputs))
@@ -55,7 +52,7 @@ class TestLayerNormalization(TestCase):
         dim = torch.randint(2, 4, (1,), dtype=torch.int32).tolist()[0]
         shape = torch.randint(2, 5, (dim,), dtype=torch.int32).tolist()
         normal_shape = shape[-1]
-        net = SimpleNet(normal_shape)
+        net = LayerNormalization(normal_shape)
         optimizer = torch.optim.Adam(net.parameters())
         criterion = nn.MSELoss()
         dataset = SimpleDataset(shape)
@@ -77,9 +74,9 @@ class TestLayerNormalization(TestCase):
             self.assertTrue(torch.allclose(y, y_hat, rtol=0.0, atol=1e-3), (i, y, y_hat))
 
     def test_save_load(self):
-        net = SimpleNet(3)
+        net = LayerNormalization(3)
         model_path = os.path.join(tempfile.gettempdir(), 'test_layer_normalization_%f.pth' % random.random())
         torch.save(net, model_path)
         net = torch.load(model_path)
         print(net)
-        self.assertEqual(torch.Size([3]), net.layer_norm.normal_shape)
+        self.assertEqual(torch.Size([3]), net.normal_shape)
